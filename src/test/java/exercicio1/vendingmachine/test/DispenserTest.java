@@ -170,6 +170,67 @@ public class DispenserTest {
 	    dispenser.definirEstoque(MoedaDeUmReal.class, 1); // apenas R$ 1 disponível
 	    Dinheiro[] troco = dispenser.trocoPara(10.00, 8.00); // troco de R$ 2
 	    assertNull(troco); // não há moedas ou notas suficientes para R$ 2
-	}	
+	}
+
+	@Test
+	public void deveRetornarTrocoComNotasDeMaiorValorPrimeiro() {
+	    dispenser.zerarEstoque();
+	    dispenser.definirEstoque(NotaDeDoisReais.class, 2);
+	    dispenser.definirEstoque(MoedaDeUmReal.class, 5);
+	    dispenser.definirEstoque(MoedaDeCinquentaCentavos.class, 2);
+
+	    Dinheiro[] troco = dispenser.trocoPara(10.00, 3.00);
+
+	    double total = 0.0;
+	    for (Dinheiro d : troco) {
+	        total += d.valor() * d.getQuantidade();
+	    }
+
+	    assertEquals(7.00, total, 0.0001);
+	}
+
+	@Test
+	public void deveRetornarOTrocoExato(){
+	    dispenser.zerarEstoque();
+	    dispenser.definirEstoque(NotaDeDoisReais.class, 4);
+	    dispenser.definirEstoque(MoedaDeCinquentaCentavos.class, 3);
+	    dispenser.definirEstoque(MoedaDeVinteECincoCentavos.class, 1);
+	    dispenser.definirEstoque(MoedaDeDezCentavos.class, 3);
+
+	    Dinheiro[] troco = dispenser.trocoPara(20.00, 14.20);
+	    double total = 0.0;
+	    for (Dinheiro d : troco) {
+	    	total += d.valor() * d.getQuantidade();
+	    };
+	    assertEquals(5.80, total, 0.0001);
+	}
 	
+	@Test
+	public void deveRetornarTrocoExatoComNotasEMoedas() {
+	    dispenser.zerarEstoque();
+	    dispenser.definirEstoque(NotaDeDoisReais.class, 2);
+	    dispenser.definirEstoque(MoedaDeCinquentaCentavos.class, 0);
+	    dispenser.definirEstoque(MoedaDeDezCentavos.class, 2);
+	    dispenser.definirEstoque(MoedaDeCincoCentavos.class, 20);
+
+	    Dinheiro[] troco = dispenser.trocoPara(10.00, 5.00);
+
+	    double total = 0.0;
+	    for (Dinheiro d : troco) {
+	        total += d.valor() * d.getQuantidade();
+	    }
+
+	    assertEquals(5.00, total, 0.0001);
+	}
+
+	@Test
+	public void deveRetornarArrayVazioQuandoNaoHaTroco() {
+	    dispenser.zerarEstoque();
+	    dispenser.definirEstoque(NotaDeDoisReais.class, 2);
+
+	    Dinheiro[] troco = dispenser.trocoPara(5.00, 5.00);
+
+	    assertNotNull(troco);
+	    assertEquals(0, troco.length);
+	}
 }
