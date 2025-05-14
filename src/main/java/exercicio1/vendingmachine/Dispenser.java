@@ -1,9 +1,15 @@
 package exercicio1.vendingmachine;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import exercicio1.vendingmachine.models.dinheiro.Dinheiro;
+import exercicio1.vendingmachine.models.dinheiro.Moeda;
 import exercicio1.vendingmachine.models.dinheiro.MoedaDeCincoCentavos;
 import exercicio1.vendingmachine.models.dinheiro.MoedaDeCinquentaCentavos;
 import exercicio1.vendingmachine.models.dinheiro.MoedaDeDezCentavos;
@@ -37,8 +43,8 @@ public class Dispenser {
 
 	// Zera todo o estoque
 	public void zerarEstoque() {
-		for (int i = 0; i < estoque.length; i++) {
-			estoque[i].setQuantidade(0);
+		for (Dinheiro dinheiro : estoque) {
+			dinheiro.setQuantidade(0);
 		}
 	}
 
@@ -77,7 +83,7 @@ public class Dispenser {
 	// Metodo de troco
 	public Dinheiro[] trocoPara(double valorPago, double valorProduto) {
 
-		double troco = Math.round((valorPago - valorProduto) * 100.0) / 100.0;
+		double troco = arredondarParaDuasCasas(valorPago - valorProduto);
 
 		// Sem troco pois saldo da máquina é menor que troco
 		if (this.getSaldoTotal() < troco) {
@@ -90,27 +96,32 @@ public class Dispenser {
 
 		// Faz uma cópia de estoque e ordena de forma decrescente
 		Dinheiro[] copiaOrdenada = clonarEOrdenarEstoquePorValorDecrescente(estoque);
-		Dinheiro[] usados = new Dinheiro[100];
+		List<Dinheiro> usados = new ArrayList<>();
 
 		mostrarQuantidadeEmEstoque("Caixa atual: ");
 		
 		// Verifica se é possível dar troco
 		boolean trocoEncontrado = tentarDarTroco(copiaOrdenada, troco, usados, 0);
+		
 		if(!trocoEncontrado) {
 			mostrarQuantidadeEmEstoque("Caixa final: ");
 			return null;
 		}
 		
-		for (int i = 0; i < usados.length && usados[i] != null; i++) {
-			this.decrementarEstoque(usados[i].getClass(), usados[i].getQuantidade());
+		for (Dinheiro dinheiro: usados) {
+			this.decrementarEstoque(dinheiro.getClass(), dinheiro.getQuantidade());
 		}
 
 		mostrarQuantidadeEmEstoque("Caixa final: ");
-		return Arrays.stream(usados).filter(Objects::nonNull).toArray(Dinheiro[]::new);
+		mostrarDinheiroUsadoParaTroco(usados.toArray(new Dinheiro[0]));
+		
+		return usados.toArray(new Dinheiro[0]);
 	}
 	
-	private boolean tentarDarTroco(Dinheiro[] estoque, double troco, Dinheiro[] usados, int usadosIndex) {
-	    if (Math.abs(troco) < 0.0001) return true;
+	private boolean tentarDarTroco(Dinheiro[] estoque, double troco, List<Dinheiro> usados, int inicio) {
+	    if (Math.abs(troco) < 0.0001) {
+	    	return true;
+	    }
 
 	    for (int i = 0; i < estoque.length; i++) {
 	        Dinheiro dinheiro = estoque[i];
@@ -121,19 +132,19 @@ public class Dispenser {
 	        int maxUsoPossivel = (int) Math.min(dinheiro.getQuantidade(), Math.floor(troco / dinheiro.valor()));
 	   	        
 	        for (int qtd = maxUsoPossivel; qtd >= 1; qtd--) {
-	            double novoTroco = Math.round((troco - qtd * dinheiro.valor()) * 100.0) / 100.0;
+	            double novoTroco = arredondarParaDuasCasas(troco - qtd * dinheiro.valor());
 	            
 	            dinheiro.setQuantidade(dinheiro.getQuantidade() - qtd);
 	            Dinheiro usado = novaInstancia(dinheiro);
 	            usado.setQuantidade(qtd);
-	            usados[usadosIndex] = usado;
+	            usados.add(usado);
 
-	            if (tentarDarTroco(estoque, novoTroco, usados, usadosIndex + 1)) {
+	            if (tentarDarTroco(estoque, novoTroco, usados, i)) {
 	            	return true;
 	            }
 
 	            dinheiro.setQuantidade(dinheiro.getQuantidade() + qtd);
-	            usados[usadosIndex] = null;
+	            usados.remove(usados.size() - 1);
 	        }
 	    }
 
@@ -141,60 +152,65 @@ public class Dispenser {
 	}
 
 
-	private void mostrarQuantidadeEmEstoque(String caixa) {
-		System.out.println(caixa);
-		System.out.println("Nota de 100.00: " + this.getQuantidade(NotaDeCemReais.class));
-		System.out.println("Nota de 50.00: " + this.getQuantidade(NotaDeCinquentaReais.class));
-		System.out.println("Nota de 20.00: " + this.getQuantidade(NotaDeVinteReais.class));
-		System.out.println("Nota de 10.00: " + this.getQuantidade(NotaDeDezReais.class));
-		System.out.println("Nota de 05.00: " + this.getQuantidade(NotaDeCincoReais.class));
-		System.out.println("Nota de 02.00: " + this.getQuantidade(NotaDeDoisReais.class));
-		System.out.println("Nota de 01.00: " + this.getQuantidade(NotaDeUmReal.class));
-		System.out.println("Moeda de 1.00: " + this.getQuantidade(MoedaDeUmReal.class));
-		System.out.println("Moeda de 0.50: " + this.getQuantidade(MoedaDeCinquentaCentavos.class));
-		System.out.println("Moeda de 0.25: " + this.getQuantidade(MoedaDeVinteECincoCentavos.class));
-		System.out.println("Moeda de 0.10: " + this.getQuantidade(MoedaDeDezCentavos.class));
-		System.out.println("Moeda de 0.05: " + this.getQuantidade(MoedaDeCincoCentavos.class));
+	private void mostrarQuantidadeEmEstoque(String titulo) {
+		System.out.println(titulo);
+
+	    List<Class<? extends Dinheiro>> tiposDeDinheiro = Arrays.asList(
+	        NotaDeCemReais.class,
+	        NotaDeCinquentaReais.class,
+	        NotaDeVinteReais.class,
+	        NotaDeDezReais.class,
+	        NotaDeCincoReais.class,
+	        NotaDeDoisReais.class,
+	        NotaDeUmReal.class,
+	        MoedaDeUmReal.class,
+	        MoedaDeCinquentaCentavos.class,
+	        MoedaDeVinteECincoCentavos.class,
+	        MoedaDeDezCentavos.class,
+	        MoedaDeCincoCentavos.class
+	    );
+
+	    for (Class<? extends Dinheiro> tipo : tiposDeDinheiro) {
+	        int qtd = this.getQuantidade(tipo);
+	        try {
+	            Dinheiro instancia = tipo.getDeclaredConstructor().newInstance();
+	            System.out.printf("%s de %.2f: %d%n", instancia instanceof Moeda ? "Moeda" : "Nota", instancia.valor(), qtd);
+	        } catch (Exception e) {
+	            System.out.println("Não foi possível instanciar valor");
+	        }
+	    }
+	}
+	
+	public void mostrarDinheiroUsadoParaTroco(Dinheiro[] usados) {
+		System.out.println("Troco fornecido:");
+	    Map<Double, Integer> agrupado = new TreeMap<>(Collections.reverseOrder());
+
+	    for (Dinheiro d : usados) {
+	        if (d == null) continue;
+	        agrupado.merge(d.valor(), d.getQuantidade(), Integer::sum);
+	    }
+
+	    for (Map.Entry<Double, Integer> entry : agrupado.entrySet()) {
+	        System.out.printf("Valor %.2f: %d unidades%n", entry.getKey(), entry.getValue());
+	    }
 	}
 
 	private Dinheiro[] clonarEOrdenarEstoquePorValorDecrescente(Dinheiro[] estoque) {
-		// Clonar estoque
-		Dinheiro[] copia = new Dinheiro[estoque.length];
-		for (int i = 0; i < estoque.length; i++) {
-			Dinheiro d = novaInstancia(estoque[i]);
-			d.setQuantidade(estoque[i].getQuantidade());
-			copia[i] = d;
-		}
-
-		// Ordenar por valor decrescente
-		for (int i = 0; i < copia.length - 1; i++) {
-			for (int j = i + 1; j < copia.length; j++) {
-				if (copia[j].valor() > copia[i].valor()) {
-					Dinheiro tmp = copia[i];
-					copia[i] = copia[j];
-					copia[j] = tmp;
-				}
-			}
-		}
-
-		return copia;
+		// Clonar estoque e ordenar em decrescente
+		return Arrays.stream(estoque).map(original -> {
+			Dinheiro clone = novaInstancia(original);
+			clone.setQuantidade(original.getQuantidade());
+			return clone;
+		}).sorted(Comparator.comparingDouble(Dinheiro::valor).reversed())
+		  .toArray(Dinheiro[]::new);		
 	}
 
 	private Dinheiro novaInstancia(Dinheiro dinheiro) {
-		if (dinheiro instanceof MoedaDeCincoCentavos) return new MoedaDeCincoCentavos();
-		if (dinheiro instanceof MoedaDeDezCentavos) return new MoedaDeDezCentavos();
-		if (dinheiro instanceof MoedaDeVinteECincoCentavos) return new MoedaDeVinteECincoCentavos();
-		if (dinheiro instanceof MoedaDeCinquentaCentavos) return new MoedaDeCinquentaCentavos();
-		if (dinheiro instanceof MoedaDeUmReal) return new MoedaDeUmReal();
-		if (dinheiro instanceof NotaDeUmReal) return new NotaDeUmReal();
-		if (dinheiro instanceof NotaDeDoisReais) return new NotaDeDoisReais();
-		if (dinheiro instanceof NotaDeCincoReais) return new NotaDeCincoReais();
-		if (dinheiro instanceof NotaDeDezReais) return new NotaDeDezReais();
-		if (dinheiro instanceof NotaDeVinteReais) return new NotaDeVinteReais();
-		if (dinheiro instanceof NotaDeCinquentaReais) return new NotaDeCinquentaReais();
-		if (dinheiro instanceof NotaDeCemReais) return new NotaDeCemReais();
-
-		throw new IllegalArgumentException("Tipo de dinheiro desconhecido");
+		try {
+			return dinheiro.getClass().getDeclaredConstructor().newInstance();
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Tipo de dinheiro desconhecido");
+		}
 	}
 
 	// Retorna a instancia do dinheiro em estoque
@@ -205,6 +221,10 @@ public class Dispenser {
 			}
 		}
 		throw new IllegalArgumentException("Tipo de dinheiro não registrado: " + dinheiro.getSimpleName());
+	}
+	
+	private double arredondarParaDuasCasas(double valor) {
+		return Math.round(valor * 100.0) / 100.0;
 	}
 
 }
