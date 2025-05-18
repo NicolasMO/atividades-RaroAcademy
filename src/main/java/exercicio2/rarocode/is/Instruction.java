@@ -8,11 +8,14 @@ public abstract class Instruction {
 
     public int execute(StackMachine stackMachine) {
         this.stackMachine = stackMachine;
-        if(this instanceof BinaryOperation binaryOperation){
+        if(this instanceof BinaryOperation ){
+        	BinaryOperation binaryOperation = (BinaryOperation) this;
             binaryOperation.execute(stackMachine.pop(), stackMachine.pop());
-        } else if (this instanceof UnaryOperation uniUnaryOperation){
+        } else if (this instanceof UnaryOperation){
+        	UnaryOperation uniUnaryOperation = (UnaryOperation) this;
             uniUnaryOperation.execute(stackMachine.pop());
-        } else if( this instanceof Statement statement) {
+        } else if( this instanceof Statement) {
+        	Statement statement = (Statement) this;
             return statement.execute(stackMachine.getCounter(), stackMachine.getMemory());
         }
         return stackMachine.getCounter() + 1;
