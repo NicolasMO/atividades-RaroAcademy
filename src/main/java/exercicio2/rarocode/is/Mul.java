@@ -5,12 +5,21 @@ import java.math.BigDecimal;
 import exercicio2.rarocode.machine.Value;
 
 public class Mul extends BinaryOperation<Number> {
-    @Override
-    public void execute(Value<Number> a, Value<Number> b) {
-        BigDecimal valA = new BigDecimal(a.getValue().toString());
-        BigDecimal valB = new BigDecimal(b.getValue().toString());
-        BigDecimal resultado = valA.multiply(valB);
-        
-        push(new Value<>(resultado));
-    }
+	@Override
+	public void execute(Value<Number> a, Value<Number> b) {
+	    Number valA = a.getValue();
+	    Number valB = b.getValue();
+	    Number resultado;
+
+	    if (valA instanceof Integer && valB instanceof Integer) {
+	        resultado = valB.intValue() * valA.intValue();
+	    } else {
+	        BigDecimal bigA = new BigDecimal(valA.toString());
+	        BigDecimal bigB = new BigDecimal(valB.toString());
+	        resultado = bigB.multiply(bigA);
+	    }
+
+	    push(new Value<>(resultado));
+	}
+
 }

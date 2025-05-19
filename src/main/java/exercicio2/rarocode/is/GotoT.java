@@ -16,9 +16,10 @@ public class GotoT extends Statement {
     public int execute(int count, Map<String, Value> memory) {
         Value<Boolean> value = pop();
         if(value.getValue() == true){
-        	push(new Value<>(true));
             return getCounterByLabel(label);
             //Jump
+        } else {
+        	push(new Value<>(false));
         }
 
         return count + 1;

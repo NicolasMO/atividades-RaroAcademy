@@ -22,6 +22,7 @@ import exercicio2.rarocode.is.GreaterThan;
 import exercicio2.rarocode.is.Inc;
 import exercicio2.rarocode.is.InputProvider;
 import exercicio2.rarocode.is.Instruction;
+import exercicio2.rarocode.is.IsPrimeNumber;
 import exercicio2.rarocode.is.Label;
 import exercicio2.rarocode.is.LessThan;
 import exercicio2.rarocode.is.Load;
@@ -412,7 +413,7 @@ public class StackMachineTest {
     	    );
 		
     	List<String> expected = Arrays.asList(
-    			"true"
+    			"5"
 		);
     	
     	List<String> output = new ArrayList<String>();
@@ -436,7 +437,10 @@ public class StackMachineTest {
     public void shouldVerifyIfPrimeNumber() {
     	// Arrange
     	List<Instruction> program = Arrays.asList(
-    			
+    			new Push(new Value<>(101)),
+    			new IsPrimeNumber(),
+    			new Print(),
+    			new End()
 		);
     	
     	List<String> expected = Arrays.asList(
